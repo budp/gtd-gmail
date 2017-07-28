@@ -89,9 +89,11 @@ function updateIcon() {
     chrome.browserAction.setBadgeText({text:"?"});
   } else {
     chrome.browserAction.setIcon({path: "gmail_logged_in.png"});
-    chrome.browserAction.setBadgeBackgroundColor({color:[208, 0, 24, 255]});
+    chrome.browserAction.setBadgeBackgroundColor({
+      color: isGmailEmail ? 'blue' : [208, 0, 24, 255]
+    });
     chrome.browserAction.setBadgeText({
-      text: localStorage.unreadCount != "0" ? localStorage.unreadCount : ""
+      text: isGmailEmail ? timer.toString() : (localStorage.unreadCount != "0" ? localStorage.unreadCount : "")
     });
   }
 }
@@ -357,40 +359,49 @@ if (chrome.runtime && chrome.runtime.onStartup) {
 //   chrome-extension://mohfmncdjkjflbhdbghipmkojfjilebb/background.html
 console.log('Hijak!');
 
-var t=setInterval(getTabLink,1000);
-var maxTime = 10;
+var t=setInterval(checkTabLink,1000);
+var isGmailEmail;
+var wasGmailEmail;
+var maxTime = 120;
 var timer = maxTime;
 var currentTabLink;
 
-function tabLink(tablink) {
-
+function countdown(tablink) {
   // Countdown!
-  if (tablink == currentTabLink) {
-    console.log('Tab did not change [' + timer + ']: ' + tablink);
+  if (tablink == currentTabLink && wasGmailEmail) {
+    console.log('Gmail tablink did not change [' + timer + ']: ' + tablink);
     timer -= 1;
 
     // Timer!
     if (timer == 0) {
       console.log('Timer!');
-      // Only alert if Gmail
-      if (tablink.includes('mail.google.com')) {
-        alert('Timer!');
-      }
+      alert('Timer!');
       timer = maxTime;
     }
 
   // Reset the Timer!  
   } else {
-    console.log('Tab changed [' + timer + ']: ' + tablink);
+    console.log('Gmail tablink changed [' + timer + ']: ' + tablink);
     currentTabLink = tablink;
     timer = maxTime;
   }
-
 };
 
-function getTabLink() {
+function checkTabLink() {
+  wasGmailEmail = isGmailEmail;
+
   chrome.tabs.getSelected(null, function(tab) {
-    tabLink(tab.url);
+    var tablink = tab.url;
+
+    if (isGmailEmail = tablink.includes('mail.google.com')) {
+      countdown(tablink);
+      updateIcon();
+    } else {
+      console.log('Tab not Google (was Google? ' + wasGmailEmail + ')');
+      if (wasGmailEmail) {
+        updateIcon();
+      }
+    }
   });
 }
 
