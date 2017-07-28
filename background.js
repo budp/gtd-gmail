@@ -349,3 +349,49 @@ if (chrome.runtime && chrome.runtime.onStartup) {
     updateIcon();
   });
 }
+
+
+// This is my script to show a popup when the same email has been open for 
+// more than 2 minutes. Switching tabs should reset the timer.
+// View the console here with Chrome Inspector:
+//   chrome-extension://mohfmncdjkjflbhdbghipmkojfjilebb/background.html
+console.log('Hijak!');
+
+var t=setInterval(getTabLink,1000);
+var maxTime = 10;
+var timer = maxTime;
+var currentTabLink;
+
+function tabLink(tablink) {
+
+  // Countdown!
+  if (tablink == currentTabLink) {
+    console.log('Tab did not change [' + timer + ']: ' + tablink);
+    timer -= 1;
+
+    // Timer!
+    if (timer == 0) {
+      console.log('Timer!');
+      // Only alert if Gmail
+      if (tablink.includes('mail.google.com')) {
+        alert('Timer!');
+      }
+      timer = maxTime;
+    }
+
+  // Reset the Timer!  
+  } else {
+    console.log('Tab changed [' + timer + ']: ' + tablink);
+    currentTabLink = tablink;
+    timer = maxTime;
+  }
+
+};
+
+function getTabLink() {
+  chrome.tabs.getSelected(null, function(tab) {
+    tabLink(tab.url);
+  });
+}
+
+console.log('Byejak!');
